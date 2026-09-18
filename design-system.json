@@ -1,0 +1,8 @@
+{
+  "anti_patterns": "Без захардкоженных цветов и без сторонних placeholder-картинок; обложки книг — эмодзи-иконки направлений на primary-фоне",
+  "colors": "Primary для hero-секций и активных фильтров, нейтральные bg-background/bg-muted/50 чередование секций, только семантические токены. Тёмная тема: чёрно-золотая палитра — золото hsl(44 78% 58%) primary на глубоком чёрном hsl(30 6% 5%), переопределена в src/custom.css внутри .dark",
+  "component_vocabulary": "Rounded-lg карточки shadow-sm → hover:shadow-md + hover:-translate-y-1, pill-кнопки фильтров, outline-бейджи категорий. Герои-ассистенты: Адам (SVG-рыцарь, adam-knight), Николь (ковёр-самолёт, chr-carpet), Кейн (чародей с колпаком и флаконом, chr-hat/chr-flask), Бани (эльф с острыми ушами, chr-ear) — все на токенах темы (chr-*), CSS-анимации adam-float/adam-bounce/adam-glow/adam-enter. Плавающая pill-кнопка «Спросить Адама» bottom-right, панель rounded-2xl с вкладками «Объяснение / Тест», печатная машинка (adam-caret). Тест: pill-варианты ответа, верный — border-primary bg-primary/10, неверный выбор — destructive, разбор ошибки в рамке, итог с Progress и аватаром.",
+  "layout": "Полноширинный hero на bg-primary, секция направлений 2 колонки, каталог grid 3 колонки с bg-muted/50, страница книги: hero + 2/1 контент + сайдбар + related",
+  "spacing": "py-16 md:py-24 секции, max-w-6xl контейнер, gap-6 между карточками",
+  "visual_personality": "Современная академическая библиотека: тёплый нейтральный Substrate + уверенный primary-акцент, крупные hero-секции, тактильные карточки"
+}

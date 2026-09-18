@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+# AI Search Engines - Explicitly Allowed
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+# AI Discovery
+Llms-Txt: /llms.txt

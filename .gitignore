@@ -1,0 +1,28 @@
+# Зависимости и сборка
+node_modules/
+dist/
+dist-ssr/
+
+# Собранный сайт, выгруженный из Wuna (содержит токены проекта)
+_build/
+
+# Локальная конфигурация рантайма: window.__APP_CONFIG__ с apiToken и Supabase-ключами
+public/config.js
+
+# Переменные окружения
+.env
+.env.*
+!.env.example
+
+# Прочее
+*.local
+.DS_Store
+Thumbs.db
+*.log
+build-log.txt
+build-check.ps1
+git-log.txt
+git-publish.ps1
+.vscode/*
+!.vscode/extensions.json
+.idea/

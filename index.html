@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru" class="preload">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230f172a'/><circle cx='16' cy='16' r='6.5' fill='%23f8fafc'/></svg>" />
+    <title>Центр разума ЮУ ИУБиП</title>
+
+<!-- design-system-fonts -->
+  <!-- Substrate type system: Geist (UI/body) + Literata (editorial) -->
+<!-- wuna:selfhost-fonts v1: гарнитуры отдаёт наш store, а не внешний Google -->
+<!-- wuna:families=Geist|Literata -->
+<link rel="preconnect" href="https://app.wuna.ai" crossorigin />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://app.wuna.ai/fonts/v1/geist-latin-100-900-normal.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://app.wuna.ai/fonts/v1/geist-cyrillic-100-900-normal.woff2" />
+<link rel="stylesheet" href="https://app.wuna.ai/fonts/v1/ds/substrate.css" />
+
+  <!-- /design-system-fonts -->
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "description": "Электронная библиотека образовательной литературы",
+      "name": "Центр разума ЮУ ИУБиП"
+    }
+    </script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

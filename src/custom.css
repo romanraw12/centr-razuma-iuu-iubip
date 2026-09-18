@@ -1,0 +1,339 @@
+/* ============================================================================
+   custom.css — то, чего нет в Tailwind «из коробки»:
+     1) чёрно-золотая палитра тёмной темы (по design-system.json);
+     2) утилиты анимаций shadcn (в зависимостях нет tailwindcss-animate,
+        поэтому animate-in / fade-in-0 / zoom-in-95 и т. п. объявлены здесь);
+     3) фигуры и анимации героев: adam-* (Адам-рыцарь) и chr-* (Николь, Кейн, Бани);
+     4) правила читаемости интерфейса (блок wuna:ui-affordance).
+   ============================================================================ */
+
+/* --- 1. Тёмная тема: глубокий чёрный фон + золотой акцент ------------------- */
+.dark {
+  --background: 30 6% 5%;
+  --foreground: 40 20% 96%;
+  --card: 30 6% 8%;
+  --card-foreground: 40 20% 96%;
+  --popover: 30 6% 8%;
+  --popover-foreground: 40 20% 96%;
+  --primary: 44 78% 58%;
+  --primary-foreground: 30 10% 8%;
+  --secondary: 30 6% 14%;
+  --secondary-foreground: 40 20% 96%;
+  --muted: 30 6% 13%;
+  --muted-foreground: 40 10% 68%;
+  --accent: 30 8% 16%;
+  --accent-foreground: 44 78% 70%;
+  --destructive: 0 62% 42%;
+  --destructive-foreground: 40 20% 96%;
+  --border: 40 10% 20%;
+  --input: 40 10% 22%;
+  --ring: 44 78% 58%;
+}
+
+.dark ::selection {
+  color: hsl(30 10% 8%);
+}
+
+/* --- 2. Утилиты анимаций shadcn (замена tailwindcss-animate) ---------------- */
+@keyframes enter {
+  from {
+    opacity: var(--tw-enter-opacity, 1);
+    transform: translate3d(
+        var(--tw-enter-translate-x, 0),
+        var(--tw-enter-translate-y, 0),
+        0
+      )
+      scale3d(var(--tw-enter-scale, 1), var(--tw-enter-scale, 1), 1)
+      rotate(var(--tw-enter-rotate, 0));
+  }
+}
+
+@keyframes exit {
+  to {
+    opacity: var(--tw-exit-opacity, 1);
+    transform: translate3d(
+        var(--tw-exit-translate-x, 0),
+        var(--tw-exit-translate-y, 0),
+        0
+      )
+      scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), 1)
+      rotate(var(--tw-exit-rotate, 0));
+  }
+}
+
+@utility animate-in {
+  animation-name: enter;
+  animation-duration: 150ms;
+  animation-fill-mode: both;
+  --tw-enter-opacity: initial;
+  --tw-enter-scale: initial;
+  --tw-enter-rotate: initial;
+  --tw-enter-translate-x: initial;
+  --tw-enter-translate-y: initial;
+}
+
+@utility animate-out {
+  animation-name: exit;
+  animation-duration: 150ms;
+  animation-fill-mode: both;
+  --tw-exit-opacity: initial;
+  --tw-exit-scale: initial;
+  --tw-exit-rotate: initial;
+  --tw-exit-translate-x: initial;
+  --tw-exit-translate-y: initial;
+}
+
+@utility fade-in-0 {
+  --tw-enter-opacity: 0;
+}
+
+@utility fade-out-0 {
+  --tw-exit-opacity: 0;
+}
+
+@utility zoom-in-95 {
+  --tw-enter-scale: 0.95;
+}
+
+@utility zoom-out-95 {
+  --tw-exit-scale: 0.95;
+}
+
+@utility slide-in-from-top-2 {
+  --tw-enter-translate-y: -0.5rem;
+}
+
+@utility slide-in-from-bottom-2 {
+  --tw-enter-translate-y: 0.5rem;
+}
+
+@utility slide-in-from-left-2 {
+  --tw-enter-translate-x: -0.5rem;
+}
+
+@utility slide-in-from-right-2 {
+  --tw-enter-translate-x: 0.5rem;
+}
+
+/* Смещения «на половину» (dialog / alert-dialog). В имени есть «/», поэтому
+   объявляем их обычными классами: анимация входа-выхода всё равно работает,
+   не хватает только полукадрового сдвига при закрытии. */
+.slide-in-from-left-1\/2 {
+  --tw-enter-translate-x: -50%;
+}
+
+.slide-in-from-top-\[48\%\] {
+  --tw-enter-translate-y: -48%;
+}
+
+.slide-out-to-left-1\/2 {
+  --tw-exit-translate-x: -50%;
+}
+
+.slide-out-to-top-\[48\%\] {
+  --tw-exit-translate-y: -48%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-in,
+  .animate-out {
+    animation-duration: 1ms;
+  }
+}
+
+/* --- 3. Герои. Адам: рыцарь из SVG (классы adam-* в AdamAssistant.tsx) ------ */
+:root {
+  --adam-bg: 222 47% 11%;
+  --adam-plume: 44 78% 58%;
+  --adam-helmet: 220 26% 34%;
+  --adam-visor: 220 20% 14%;
+  --adam-eye: 44 90% 68%;
+  --adam-rivet: 210 20% 82%;
+  --adam-armor: 220 22% 28%;
+  --adam-book: 40 30% 88%;
+}
+
+.dark {
+  --adam-bg: 30 8% 12%;
+  --adam-helmet: 40 12% 30%;
+  --adam-armor: 40 10% 24%;
+  --adam-book: 44 40% 82%;
+}
+
+.adam-knight {
+  display: block;
+}
+
+.adam-knight .adam-bg {
+  fill: hsl(var(--adam-bg));
+}
+
+.adam-knight .adam-plume {
+  fill: hsl(var(--adam-plume));
+}
+
+.adam-knight .adam-helmet {
+  fill: hsl(var(--adam-helmet));
+}
+
+.adam-knight .adam-visor {
+  fill: hsl(var(--adam-visor));
+}
+
+.adam-knight .adam-eye {
+  fill: hsl(var(--adam-eye));
+}
+
+.adam-knight .adam-rivet {
+  fill: hsl(var(--adam-rivet));
+}
+
+.adam-knight .adam-armor {
+  fill: hsl(var(--adam-armor));
+}
+
+.adam-knight .adam-book {
+  stroke: hsl(var(--adam-book));
+  stroke-width: 2;
+  stroke-linecap: round;
+  fill: none;
+}
+
+/* Каретка печатной машинки в реплике героя (HeroSpeech). */
+.adam-caret {
+  display: inline-block;
+  margin-left: 1px;
+  color: hsl(var(--primary));
+  animation: adam-caret-blink 1s steps(2, start) infinite;
+}
+
+@keyframes adam-caret-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Плавающая кнопка вызова героев. */
+.adam-launcher {
+  animation: adam-enter 0.35s ease-out both;
+}
+
+.adam-launcher:hover {
+  border-color: hsl(var(--primary));
+}
+
+.adam-launcher:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adam-caret,
+  .adam-launcher {
+    animation: none;
+  }
+}
+
+/* --- 3б. Герои. Николь, Кейн, Бани: классы chr-* ---------------------------
+   ЧЕРНОВИК: оригинальные SVG-фигуры (ковёр-самолёт, колпак и флакон, острые уши)
+   в дампе не дошли. Пока классы задают узнаваемый акцент на токенах темы —
+   заменить фигурами из исходников проекта. */
+.chr-carpet {
+  --chr-accent: 199 72% 52%;
+}
+
+.chr-hat,
+.chr-flask {
+  --chr-accent: 276 46% 58%;
+}
+
+.chr-ear {
+  --chr-accent: 152 44% 44%;
+}
+
+.chr-carpet,
+.chr-hat,
+.chr-flask,
+.chr-ear {
+  background-color: hsl(var(--chr-accent) / 0.16);
+  color: hsl(var(--chr-accent));
+  box-shadow: inset 0 0 0 2px hsl(var(--chr-accent) / 0.35);
+}
+
+/* Николь — ковёр-самолёт: мягкая тень «полёта» и лёгкий наклон. */
+.chr-carpet {
+  border-end-start-radius: 40%;
+  border-end-end-radius: 40%;
+}
+
+/* Кейн — колпак и флакон: «шляпа» сверху и пузырёк внутри. */
+.chr-hat {
+  position: relative;
+  border-start-start-radius: 50%;
+  border-start-end-radius: 50%;
+}
+
+.chr-hat::after {
+  content: '';
+  position: absolute;
+  inset-inline: 22%;
+  top: -12%;
+  height: 18%;
+  border-radius: 9999px;
+  background-color: hsl(var(--chr-accent) / 0.5);
+}
+
+/* Бани — эльф с острыми ушами: скошенные углы. */
+.chr-ear {
+  border-start-start-radius: 60% 30%;
+  border-start-end-radius: 60% 30%;
+}
+
+/* --- 4. Читаемость интерфейса (блок платформы) ----------------------------- */
+/* == wuna:ui-affordance == */
+/* Если блок объявлен «тёмным» (bg-primary/bg-foreground/bg-black), текст внутри
+   принудительно делаем контрастным, даже если в разметке остался
+   text-foreground или text-black — иначе на плотном фоне текст исчезает. */
+.bg-primary:is(
+  [class~='text-foreground'],
+  [class^='text-foreground/'],
+  [class*=' text-foreground/'],
+  [class~='text-black'],
+  [class^='text-black/'],
+  [class*=' text-black/']
+) {
+  color: hsl(var(--primary-foreground));
+}
+
+.bg-foreground:is(
+  [class~='text-foreground'],
+  [class^='text-foreground/'],
+  [class*=' text-foreground/'],
+  [class~='text-black'],
+  [class^='text-black/'],
+  [class*=' text-black/']
+) {
+  color: hsl(var(--background));
+}
+
+.bg-black:is(
+  [class~='text-foreground'],
+  [class^='text-foreground/'],
+  [class*=' text-foreground/'],
+  [class~='text-black'],
+  [class^='text-black/'],
+  [class*=' text-black/']
+) {
+  color: #f4f4f5;
+}
+
+/* == /wuna:ui-affordance == */
+
+/* Полоса прокрутки в тон темы (в тёмной теме светлая полоса режет глаз). */
+.dark * {
+  scrollbar-color: hsl(var(--border)) transparent;
+}
