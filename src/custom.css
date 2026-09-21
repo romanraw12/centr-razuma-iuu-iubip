@@ -8,26 +8,43 @@
    ============================================================================ */
 
 /* --- 1. Тёмная тема: глубокий чёрный фон + золотой акцент ------------------- */
+/* Оригинальные значения из боевой сборки Wuna (dump/css-theme.css): второй
+   блок .dark перекрывает базовый графит из index.css. */
 .dark {
   --background: 30 6% 5%;
-  --foreground: 40 20% 96%;
-  --card: 30 6% 8%;
-  --card-foreground: 40 20% 96%;
-  --popover: 30 6% 8%;
-  --popover-foreground: 40 20% 96%;
+  --foreground: 42 30% 91%;
+  --card: 32 7% 8%;
+  --card-foreground: 42 30% 91%;
+  --popover: 32 7% 8%;
+  --popover-foreground: 42 30% 91%;
   --primary: 44 78% 58%;
   --primary-foreground: 30 10% 8%;
-  --secondary: 30 6% 14%;
-  --secondary-foreground: 40 20% 96%;
-  --muted: 30 6% 13%;
-  --muted-foreground: 40 10% 68%;
-  --accent: 30 8% 16%;
-  --accent-foreground: 44 78% 70%;
-  --destructive: 0 62% 42%;
-  --destructive-foreground: 40 20% 96%;
-  --border: 40 10% 20%;
-  --input: 40 10% 22%;
+  --secondary: 36 10% 14%;
+  --secondary-foreground: 44 40% 88%;
+  --muted: 36 10% 13%;
+  --muted-foreground: 42 14% 64%;
+  --accent: 38 14% 17%;
+  --accent-foreground: 44 40% 90%;
+  --destructive: 4 64% 56%;
+  --destructive-foreground: 40 40% 99%;
+  --border: 40 16% 21%;
+  --input: 40 16% 24%;
   --ring: 44 78% 58%;
+
+  --chart-1: 44 78% 58%;
+  --chart-2: 38 60% 55%;
+  --chart-3: 50 45% 62%;
+  --chart-4: 30 30% 45%;
+  --chart-5: 48 70% 50%;
+
+  --sidebar: 32 7% 7%;
+  --sidebar-foreground: 42 30% 91%;
+  --sidebar-accent: 38 14% 17%;
+  --sidebar-accent-foreground: 44 40% 90%;
+  --sidebar-border: 40 16% 21%;
+  --sidebar-primary: 44 78% 58%;
+  --sidebar-primary-foreground: 30 10% 8%;
+  --sidebar-ring: 44 78% 58%;
 }
 
 .dark ::selection {
@@ -238,10 +255,10 @@
   }
 }
 
-/* --- 3б. Герои. Николь, Кейн, Бани: классы chr-* ---------------------------
-   ЧЕРНОВИК: оригинальные SVG-фигуры (ковёр-самолёт, колпак и флакон, острые уши)
-   в дампе не дошли. Пока классы задают узнаваемый акцент на токенах темы —
-   заменить фигурами из исходников проекта. */
+/* --- 3б. Герои. Николь, Кейн, Бани: SVG-фигуры chr-* ----------------------
+   Оригинальные правила фигур из боевой сборки Wuna (dump/css-theme.css).
+   Ниже они же для разметки вида <svg class="chr-svg">…</svg>; простые
+   классы-акценты (--chr-accent) оставлены запасным вариантом для div-аватаров. */
 .chr-carpet {
   --chr-accent: 199 72% 52%;
 }
@@ -291,6 +308,102 @@
 .chr-ear {
   border-start-start-radius: 60% 30%;
   border-start-end-radius: 60% 30%;
+}
+
+/* --- 3в. Фигуры chr-*: дословно из боевой сборки (SVG-разметка) ------------- */
+.chr-svg .chr-bg {
+  fill: hsl(var(--primary) / 0.14);
+}
+
+.chr-svg .chr-carpet {
+  fill: hsl(var(--primary) / 0.85);
+  stroke: hsl(var(--primary-foreground) / 0.3);
+  stroke-width: 1;
+}
+
+.chr-svg .chr-carpet-line {
+  stroke: hsl(var(--primary-foreground) / 0.55);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.chr-svg .chr-face {
+  fill: hsl(var(--primary-foreground) / 0.9);
+}
+
+.chr-svg .chr-hair {
+  fill: hsl(var(--primary) / 0.55);
+  stroke: hsl(var(--primary-foreground) / 0.2);
+  stroke-width: 0.6;
+}
+
+.chr-svg .chr-eye {
+  fill: #161412d9;
+  animation: adam-eye-glow 2.8s ease-in-out infinite;
+}
+
+.chr-svg .chr-smile {
+  stroke: #161412cc;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.chr-svg .chr-crown {
+  fill: hsl(var(--primary));
+  stroke: hsl(var(--primary-foreground) / 0.35);
+  stroke-width: 0.8;
+}
+
+.chr-svg .chr-hat {
+  fill: hsl(var(--primary) / 0.9);
+  stroke: hsl(var(--primary-foreground) / 0.25);
+  stroke-width: 0.8;
+}
+
+.chr-svg .chr-star {
+  fill: hsl(var(--primary-foreground));
+  animation: adam-eye-glow 2.2s ease-in-out infinite;
+}
+
+.chr-svg .chr-beard {
+  fill: hsl(var(--foreground) / 0.9);
+}
+
+.chr-svg .chr-robe {
+  fill: hsl(var(--primary) / 0.7);
+  stroke: hsl(var(--primary-foreground) / 0.2);
+  stroke-width: 1;
+}
+
+.chr-svg .chr-flask {
+  fill: hsl(var(--primary-foreground) / 0.85);
+  stroke: hsl(var(--primary));
+  stroke-width: 1;
+}
+
+.chr-svg .chr-ear {
+  fill: hsl(var(--primary-foreground) / 0.9);
+  stroke: hsl(var(--primary) / 0.5);
+  stroke-width: 0.8;
+}
+
+.chr-svg .chr-leaf {
+  fill: hsl(var(--primary) / 0.8);
+}
+
+/* Золотые варианты фигур для тёмной темы. */
+.dark .chr-svg .chr-carpet {
+  fill: #b8932ee6;
+}
+
+.dark .chr-svg .chr-hat {
+  fill: #b8932ef2;
+}
+
+.dark .chr-svg .chr-robe {
+  fill: #917830d9;
 }
 
 /* --- 4. Читаемость интерфейса (блок платформы) ----------------------------- */

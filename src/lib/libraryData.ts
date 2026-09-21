@@ -16,13 +16,21 @@ export interface Book {
   tags: string[]
   /** Объём в страницах — показывается в карточке. */
   pages: number
+  /** Подпись времени чтения из оригинала, например «6 ч чтения». */
+  readTime?: string
+  /** Показать в подборке избранного на главной. */
+  featured?: boolean
   /** Эмодзи-обложка направления. */
   cover: string
   /** Текст книги в markdown для страницы чтения (/read/:id). */
   content: string
 }
 
-export const SAMPLE_BOOKS: Book[] = [
+import { CATALOG_BOOKS } from './catalog'
+
+/* Прежний черновик каталога (4 книги-заготовки) оставлен как ориентир формы
+   данных: он нигде не импортируется и потому вырезается при сборке. */
+export const CATALOG_DRAFT: Book[] = [
   {
     id: 'tourism-hospitality-basics',
     title: 'Индустрия гостеприимства: структура и экономика',
@@ -92,6 +100,9 @@ export const SAMPLE_BOOKS: Book[] = [
 Рецепт — письменное обращение врача в аптеку с указанием лекарственной формы, дозировки и порядка приёма. Различают рецепты обязательные (по форме 107-1/у) и льготные.`,
   },
 ]
+
+/* Оригинальный каталог из боевой сборки Wuna — 14 изданий (src/lib/catalog.ts). */
+export const SAMPLE_BOOKS: Book[] = CATALOG_BOOKS
 
 export function getBookById(id: string): Book | undefined {
   return SAMPLE_BOOKS.find((book) => book.id === id)

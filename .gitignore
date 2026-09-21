@@ -23,6 +23,8 @@ build-log.txt
 build-check.ps1
 git-log.txt
 git-publish.ps1
+extract-bundle.mjs
+dump/
 .vscode/*
 !.vscode/extensions.json
 .idea/
