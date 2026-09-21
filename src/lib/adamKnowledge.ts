@@ -2,23 +2,23 @@
 // Пошаговые объяснения каждого раздела библиотеки: если студент
 // не хочет читать книгу целиком, герой расскажет суть по пунктам —
 // подробно, с примерами, терминами и цифрами.
+//
+// Основной источник текстов — src/lib/sectionKnowledge.ts: модуль,
+// сгенерированный из боевой сборки Wuna, где все четыре раздела лежат
+// дословно. Реконструкция ниже используется как запасной вариант, если
+// в сборке какого-то раздела не окажется.
 
-export interface ExplainStep {
-  title: string;
-  text: string;
-}
+import {
+  SECTION_KNOWLEDGE,
+  type AdamSectionKnowledge,
+  type ExplainStep,
+} from './sectionKnowledge'
 
-export interface AdamSectionKnowledge {
-  categoryId: string;
-  intro: string;
-  steps: ExplainStep[];
-  outro: string;
-  bookTip: string;
-}
+export type { AdamSectionKnowledge, ExplainStep }
 
-export const ADAM_GREETING = 'Приветствую! Я Адам, рыцарь Центра разума. Провожу тебя по залам библиотеки и объясню любой раздел простыми словами — читать целиком не обязательно. Выбери направление, и начнём!';
+export const ADAM_GREETING = 'Приветствую! Я Адам, рыцарь Центра разума. Провожу тебя по залам библиотеки и объясню любой раздел простыми словами — читать целиком не обязательно. Выбери направление, и начнём!'
 
-export const ADAM_SECTIONS: AdamSectionKnowledge[] = [
+const RECONSTRUCTED_SECTIONS: AdamSectionKnowledge[] = [
   {
     categoryId: 'tourism',
     intro: 'Зал туризма и гостеприимства! Здесь учат встречать гостей так, чтобы они возвращались. Николь обычно ведёт экскурсии, но я изучил и этот зал. Смотри, из чего складывается направление:',
@@ -141,8 +141,18 @@ export const ADAM_SECTIONS: AdamSectionKnowledge[] = [
   },
 ];
 
+/** Порядок разделов в панели героев — как в оригинале. */
+const SECTION_ORDER = ['tourism', 'law', 'economics', 'pharmacy'] as const
+
+/** Знания по разделам: дословно из боевой сборки, с реконструкцией в запасе. */
+export const ADAM_SECTIONS: AdamSectionKnowledge[] = SECTION_ORDER.map((id) => {
+  const fromBundle = SECTION_KNOWLEDGE?.[id]
+  if (fromBundle) return fromBundle
+  return RECONSTRUCTED_SECTIONS.find((section) => section.categoryId === id)
+}).filter((section): section is AdamSectionKnowledge => Boolean(section))
+
 /** Знания героя по разделу каталога; для неизвестного раздела — туризм. */
 export function getAdamKnowledge(categoryId?: string): AdamSectionKnowledge {
-  const found = ADAM_SECTIONS.find((section) => section.categoryId === categoryId);
-  return found ?? ADAM_SECTIONS[0];
+  const found = ADAM_SECTIONS.find((section) => section.categoryId === categoryId)
+  return found ?? ADAM_SECTIONS[0]
 }

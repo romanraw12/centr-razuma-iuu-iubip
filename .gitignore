@@ -24,6 +24,7 @@ build-check.ps1
 git-log.txt
 git-publish.ps1
 extract-bundle.mjs
+extract-content.mjs
 dump/
 .vscode/*
 !.vscode/extensions.json

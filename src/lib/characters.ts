@@ -1,8 +1,10 @@
-/* ВОССТАНОВЛЕНО по контракту из AdamAssistant.tsx и design-system.json:
-   Николь (ковёр-самолёт) — туризм, Адам (рыцарь) — юриспруденция,
-   Кейн (чародей с колпаком и флаконом) — фармация, Бани (эльф) — экономика. */
+/* Данные героев из боевой сборки Wuna (массив Sf): Николь (ковёр-самолёт) —
+   туризм, Адам (рыцарь) — юриспруденция, Кейн (чародей с колпаком и флаконом) —
+   фармация, Бани (эльф) — экономика. Идентификатор Бани в оригинале — 'bunny'. */
 
-export type CharacterId = 'adam' | 'nicole' | 'cain' | 'bani'
+import { CHARACTER_EXTRAS } from './characterExtras'
+
+export type CharacterId = 'adam' | 'nicole' | 'cain' | 'bunny'
 
 export type CategoryId = 'tourism' | 'law' | 'economics' | 'pharmacy'
 
@@ -18,11 +20,22 @@ export interface Character {
   greeting: string
   /** Эмодзи-иконка раздела (обложки книг делаются на primary-фоне). */
   emoji: string
+  /** Реплики героя о конкретных изданиях раздела (ключ — id книги). */
+  bookLines: Record<string, string>
+  /** Вердикт теста при отличном результате. */
+  greatDone: string
+  /** Заголовок вердикта при среднем результате. */
+  midDoneTitle: string
+  /** Текст вердикта при среднем результате. */
+  midDoneText: string
 }
 
 /* Данные героев — из боевой сборки Wuna (массив Sf в dump/js-strings.txt):
    имена, роли, tagline и приветствия перенесены дословно. */
-export const CHARACTERS: Character[] = [
+const CHARACTER_BASE: Omit<
+  Character,
+  'bookLines' | 'greatDone' | 'midDoneTitle' | 'midDoneText'
+>[] = [
   {
     id: 'adam',
     name: 'Адам',
@@ -54,7 +67,7 @@ export const CHARACTERS: Character[] = [
     emoji: '⚕️',
   },
   {
-    id: 'bani',
+    id: 'bunny',
     name: 'Бани',
     categoryId: 'economics',
     role: 'Эльф экономики',
@@ -65,12 +78,34 @@ export const CHARACTERS: Character[] = [
   },
 ]
 
+/* Реплики к изданиям и вердикты тестов берём из отдельного модуля, который
+   генерируется из боевого бандла (src/lib/characterExtras.ts). */
+export const CHARACTERS: Character[] = CHARACTER_BASE.map((character) => {
+  const extras = CHARACTER_EXTRAS[character.categoryId]
+  return {
+    ...character,
+    bookLines: extras?.bookLines ?? {},
+    greatDone: extras?.greatDone ?? '',
+    midDoneTitle: extras?.midDoneTitle ?? '',
+    midDoneText: extras?.midDoneText ?? '',
+  }
+})
+
 export function getCharacterByCategory(categoryId: string): Character | undefined {
   return CHARACTERS.find((character) => character.categoryId === categoryId)
 }
 
 export function getCharacterById(id: CharacterId): Character | undefined {
   return CHARACTERS.find((character) => character.id === id)
+}
+
+/** Реплика героя раздела о конкретном издании — для карточки книги. */
+export function getHeroBookLine(
+  categoryId: string,
+  bookId: number | string
+): string | undefined {
+  const character = getCharacterByCategory(categoryId)
+  return character?.bookLines[String(bookId)]
 }
 
 export interface Category {
@@ -102,7 +137,7 @@ export const CATEGORIES: Category[] = [
     title: 'Экономика и управление',
     description: 'Микро- и макроэкономика, менеджмент, маркетинг и финансы.',
     emoji: '📈',
-    characterId: 'bani',
+    characterId: 'bunny',
   },
   {
     id: 'pharmacy',

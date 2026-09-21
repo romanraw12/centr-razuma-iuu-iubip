@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator'
 import { CharacterAvatar } from '@/components/CharacterAvatar'
 import EmptyState from '@/components/EmptyState'
-import { getCharacterByCategory } from '@/lib/characters'
+import { getCharacterByCategory, getHeroBookLine } from '@/lib/characters'
 import { SAMPLE_BOOKS, getBookById } from '@/lib/libraryData'
 import { usePageMeta } from '@/hooks/usePageMeta'
 
@@ -39,6 +39,7 @@ export default function Book() {
   }
 
   const character = getCharacterByCategory(book.categoryId)
+  const heroLine = getHeroBookLine(book.categoryId, book.id)
   const related = SAMPLE_BOOKS.filter(
     (item) => item.categoryId === book.categoryId && item.id !== book.id
   )
@@ -134,12 +135,20 @@ export default function Book() {
                   {character.name} объяснит тему по шагам и проведёт тест.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex items-center gap-3">
-                <CharacterAvatar id={character.id} size={44} />
-                <div>
-                  <p className="text-sm font-medium text-foreground">{character.name}</p>
-                  <p className="text-xs text-muted-foreground">{character.role}</p>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <CharacterAvatar id={character.id} size={44} />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{character.name}</p>
+                    <p className="text-xs text-muted-foreground">{character.role}</p>
+                  </div>
                 </div>
+                {heroLine && (
+                  <p className="rounded-lg border bg-muted/30 p-3 text-xs leading-relaxed text-muted-foreground">
+                    <span className="font-medium text-foreground">Совет героя: </span>
+                    {heroLine}
+                  </p>
+                )}
               </CardContent>
             </Card>
           )}

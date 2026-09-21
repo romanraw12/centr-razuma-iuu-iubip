@@ -5,11 +5,15 @@ import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 import { getCharacterByCategory, type CharacterId } from '@/lib/characters'
 import { playSfx } from '@/lib/heroSounds'
+import { QUIZ_BANKS } from '@/lib/quizBanks'
 import CharacterAvatar from './CharacterAvatar'
 
-/* ВОССТАНОВЛЕНО: файл не дошёл в дампе. Стиль — по design-system.json:
-   pill-варианты ответа, верный — border-primary bg-primary/10, неверный
-   выбор — destructive, разбор ошибки в рамке, итог с Progress и аватаром. */
+/* Вопросы, разборы и вердикты берутся из src/lib/quizBanks.ts — модуля,
+   сгенерированного из боевой сборки Wuna (по 10 вопросов на раздел).
+   Набор ниже остаётся запасным вариантом, если раздела не окажется в сборке.
+   Стиль — по design-system.json: pill-варианты ответа, верный —
+   border-primary bg-primary/10, неверный выбор — destructive, разбор ошибки
+   в рамке, итог с Progress и аватаром. */
 
 export interface QuizQuestion {
   question: string
@@ -19,7 +23,7 @@ export interface QuizQuestion {
   explanation: string
 }
 
-const QUIZZES: Record<string, QuizQuestion[]> = {
+const RECONSTRUCTED_QUIZZES: Record<string, QuizQuestion[]> = {
   tourism: [
     {
       question: 'Что гость покупает в первую очередь?',
@@ -130,10 +134,16 @@ export function CharacterQuiz({
   categoryId: string
   onFinish?: (score: number, total: number) => void
 }) {
-  const questions = useMemo(() => QUIZZES[categoryId] ?? QUIZZES.tourism, [categoryId])
+  const categoryKey = categoryId as keyof typeof QUIZ_BANKS
+  const bank = QUIZ_BANKS?.[categoryKey] ?? QUIZ_BANKS?.tourism
+  const questions = useMemo(
+    () => bank?.questions ?? RECONSTRUCTED_QUIZZES[categoryId] ?? RECONSTRUCTED_QUIZZES.tourism,
+    [bank, categoryId]
+  )
   const [index, setIndex] = useState(0)
   const [picked, setPicked] = useState<number | null>(null)
   const [score, setScore] = useState(0)
+  const [wrong, setWrong] = useState<number[]>([])
   const [finished, setFinished] = useState(false)
 
   const character = getCharacterByCategory(categoryId)
@@ -148,6 +158,7 @@ export function CharacterQuiz({
     const correct = option === current.correct
     playSfx(correct ? 'correct' : 'wrong')
     if (correct) setScore((value) => value + 1)
+    else setWrong((value) => [...value, index])
   }
 
   const next = () => {
@@ -164,26 +175,36 @@ export function CharacterQuiz({
     setIndex(0)
     setPicked(null)
     setScore(0)
+    setWrong([])
     setFinished(false)
   }
 
   if (finished) {
     const percent = Math.round((score / total) * 100)
+    const passed = percent >= 80
+    const character = getCharacterByCategory(categoryId)
+    const verdict = passed
+      ? character?.greatDone || 'Отличный результат — раздел можно считать освоенным.'
+      : character?.midDoneText || 'Есть над чем поработать: вернись к объяснению и попробуй снова.'
+
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <CharacterAvatar id={characterId} size={44} talking />
           <div>
             <p className="font-medium text-foreground">
-              Итог: {score} из {total}
+              {passed
+                ? `Итог: ${score} из ${total}`
+                : `${character?.midDoneTitle || 'Есть пробелы'} · ${score} из ${total}`}
             </p>
-            <p className="text-sm text-muted-foreground">
-              {percent >= 80
-                ? 'Отличный результат — раздел можно считать освоенным.'
-                : 'Есть над чем поработать: вернись к объяснению и попробуй снова.'}
-            </p>
+            <p className="text-sm text-muted-foreground">{verdict}</p>
           </div>
         </div>
+        {wrong.length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            Повтори темы: {wrong.map((number) => `№${number + 1}`).join(', ')}
+          </p>
+        )}
         <Progress value={percent} />
         <Button variant="outline" size="sm" onClick={restart}>
           Пройти заново
@@ -200,6 +221,10 @@ export function CharacterQuiz({
         </span>
         <span>Верно: {score}</span>
       </div>
+
+      {index === 0 && picked === null && bank?.intro && (
+        <p className="text-sm text-muted-foreground">{bank.intro}</p>
+      )}
 
       <p className="font-medium text-foreground">{current.question}</p>
 

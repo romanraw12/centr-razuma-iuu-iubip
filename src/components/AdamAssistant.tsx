@@ -6,7 +6,7 @@ import { ADAM_GREETING, getAdamKnowledge } from '../lib/adamKnowledge';
 import { SAMPLE_BOOKS } from '../lib/libraryData';
 import { Link } from 'react-router-dom';
 import { CHARACTERS, getCharacterByCategory, type CharacterId } from '../lib/characters';
-import CharacterAvatar from './CharacterAvatar';
+import CharacterAvatar, { AdamFigure } from './CharacterAvatar';
 import CharacterQuiz from './CharacterQuiz';
 
 /* ============================================================
@@ -16,40 +16,8 @@ import CharacterQuiz from './CharacterQuiz';
    с разбором ошибок. Панель открывается плавающей кнопкой.
    ============================================================ */
 
-/** Анимированная фигурка рыцаря Адама (SVG) */
-export function AdamKnight({ size = 56, talking = false, plain = false }: {
-  size?: number;
-  talking?: boolean;
-  plain?: boolean;
-}) {
-  return (
-    <span
-      role="img"
-      aria-label="Рыцарь Адам"
-      className={`relative inline-flex shrink-0 items-center justify-center rounded-full overflow-hidden ${
-        talking ? 'animate-adam-bounce' : 'animate-adam-float'
-      }`}
-      style={{ width: size, height: size }}
-    >
-      <svg viewBox="0 0 100 100" width={size} height={size} className="adam-knight">
-        <circle cx="50" cy="50" r="50" className="adam-bg" />
-        <path d="M50 6 C 62 12, 70 24, 66 34 L 34 34 C 30 24, 38 12, 50 6 Z" className="adam-plume" />
-        <path d="M30 52 C 30 30, 40 22, 50 22 C 60 22, 70 30, 70 52 L 70 66 C 70 72, 62 76, 50 76 C 38 76, 30 72, 30 66 Z" className="adam-helmet" />
-        <rect x="36" y="44" width="28" height="5" rx="2.5" className="adam-visor" />
-        <circle cx="43" cy="56" r="2.6" className="adam-eye" />
-        <circle cx="57" cy="56" r="2.6" className="adam-eye" />
-        <circle cx="38" cy="36" r="1.4" className="adam-rivet" />
-        <circle cx="62" cy="36" r="1.4" className="adam-rivet" />
-        <circle cx="50" cy="30" r="1.4" className="adam-rivet" />
-        <path d="M22 78 C 24 68, 34 64, 40 68 L 40 82 C 32 84, 24 84, 22 78 Z" className="adam-armor" />
-        <path d="M78 78 C 76 68, 66 64, 60 68 L 60 82 C 68 84, 76 84, 78 78 Z" className="adam-armor" />
-        <path d="M34 78 C 38 70, 62 70, 66 78 L 64 92 C 56 96, 44 96, 36 92 Z" className="adam-armor" />
-        <path d="M44 80 h12 M44 85 h12 M44 90 h8" className="adam-book" />
-      </svg>
-      {!plain && <span aria-hidden="true" className="absolute inset-0 rounded-full animate-adam-glow" />}
-    </span>
-  );
-}
+/* Фигуры героев — в CharacterAvatar.tsx: разметка и классы перенесены
+   из боевой сборки Wuna (adam-knight, chr-carpet, chr-hat/chr-flask, chr-ear). */
 
 /** Реплика с эффектом печатной машинки */
 function HeroSpeech({ text, speed = 18, voice }: { text: string; speed?: number; voice?: CharacterId }) {
@@ -83,7 +51,7 @@ export function AdamLauncher({ onOpen }: { onOpen: () => void }) {
       onClick={onOpen}
       className="adam-launcher fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-full border border-border bg-card px-4 py-2.5 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
     >
-      <AdamKnight size={28} plain />
+      <AdamFigure size={28} plain />
       <span className="text-sm font-medium text-foreground">Спросить Адама</span>
     </button>
   );
@@ -126,7 +94,7 @@ export function AdamPanel({ onClose }: { onClose: () => void }) {
       className="fixed bottom-24 right-5 z-50 flex w-[min(24rem,calc(100vw-2.5rem))] flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-2xl"
     >
       <header className="flex items-start gap-3">
-        <AdamKnight size={40} talking={tab === 'explain'} plain={character.id !== 'adam'} />
+        <CharacterAvatar id={character.id} size={44} talking={tab === 'explain'} />
         <div className="flex-1">
           <p className="font-semibold text-foreground">{character.name}</p>
           <p className="text-xs text-muted-foreground">{character.role}</p>

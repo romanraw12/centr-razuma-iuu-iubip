@@ -119,7 +119,7 @@ const VOICE_HINTS: Record<CharacterId, string[]> = {
   adam: ['Pavel', 'Dmitri', 'Milena', 'Google русский'],
   nicole: ['Milena', 'Katya', 'Google русский'],
   cain: ['Dmitri', 'Pavel', 'Google русский'],
-  bani: ['Katya', 'Milena', 'Google русский'],
+  bunny: ['Katya', 'Milena', 'Google русский'],
 }
 
 function pickVoice(character?: CharacterId): SpeechSynthesisVoice | null {
@@ -150,7 +150,7 @@ export function speakHero(text: string, character?: CharacterId) {
     if (voice) utterance.voice = voice
     utterance.lang = voice?.lang ?? 'ru-RU'
     utterance.rate = 1
-    utterance.pitch = character === 'bani' ? 1.15 : character === 'cain' ? 0.9 : 1
+    utterance.pitch = character === 'bunny' ? 1.15 : character === 'cain' ? 0.9 : 1
     window.speechSynthesis.speak(utterance)
   } catch {
     /* синтез речи недоступен */
