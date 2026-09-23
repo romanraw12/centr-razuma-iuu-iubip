@@ -3,7 +3,8 @@ import { ThemeProvider } from '@/hooks/useTheme'
 import { Toaster } from '@/components/ui/sonner'
 import ErrorBoundary from './components/ErrorBoundary'
 import Layout from './components/Layout'
-import AdamAssistant from './components/AdamAssistant'
+import AdamAssistant from './components/AdamAssistantPanel'
+import { getBookById } from './lib/libraryData'
 import { routes } from './routes'
 
 /* ВОССТАНОВЛЕНО: файл не дошёл в дампе. Роутинг берётся из routes.tsx,
@@ -13,6 +14,13 @@ import { routes } from './routes'
 function AppShell() {
   const location = useLocation()
   const active = routes.find((route) => matchPath(route.path, location.pathname))
+
+  /* Страница издания передаёт панели героев своё направление (в бандле — проп
+     initialCategory у xC/bC): герой раздела оказывается выбран сразу. */
+  const bookMatch = matchPath('/book/:id', location.pathname)
+  const initialCategory = bookMatch?.params.id
+    ? getBookById(bookMatch.params.id)?.categoryId
+    : undefined
 
   return (
     <div className="preload-guard" key={location.pathname}>
@@ -29,7 +37,7 @@ function AppShell() {
           />
         ))}
       </Routes>
-      {active?.layout !== 'bare' && <AdamAssistant />}
+      {active?.layout !== 'bare' && <AdamAssistant initialCategory={initialCategory} />}
     </div>
   )
 }

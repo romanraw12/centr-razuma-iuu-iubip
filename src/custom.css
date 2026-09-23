@@ -48,7 +48,8 @@
 }
 
 .dark ::selection {
-  color: hsl(30 10% 8%);
+  background: #e7bb4059;
+  color: #f6f4ee;
 }
 
 /* --- 2. Утилиты анимаций shadcn (замена tailwindcss-animate) ---------------- */
@@ -158,70 +159,80 @@
   }
 }
 
-/* --- 3. Герои. Адам: рыцарь из SVG (классы adam-* в AdamAssistant.tsx) ------ */
-:root {
-  --adam-bg: 222 47% 11%;
-  --adam-plume: 44 78% 58%;
-  --adam-helmet: 220 26% 34%;
-  --adam-visor: 220 20% 14%;
-  --adam-eye: 44 90% 68%;
-  --adam-rivet: 210 20% 82%;
-  --adam-armor: 220 22% 28%;
-  --adam-book: 40 30% 88%;
-}
+/* --- 3. Герои. Адам: рыцарь из SVG (классы adam-* в AdamAssistantPanel.tsx) --- */
 
-.dark {
-  --adam-bg: 30 8% 12%;
-  --adam-helmet: 40 12% 30%;
-  --adam-armor: 40 10% 24%;
-  --adam-book: 44 40% 82%;
-}
-
+/* Правила рыцаря — дословно из боевой сборки (dump/css-theme.css):
+   цвета берутся напрямую от темы, у глаз — пульс adam-eye-glow. */
 .adam-knight {
   display: block;
 }
 
 .adam-knight .adam-bg {
-  fill: hsl(var(--adam-bg));
-}
-
-.adam-knight .adam-plume {
-  fill: hsl(var(--adam-plume));
+  fill: hsl(var(--primary) / 0.14);
 }
 
 .adam-knight .adam-helmet {
-  fill: hsl(var(--adam-helmet));
+  fill: hsl(var(--primary) / 0.9);
+  stroke: hsl(var(--primary-foreground) / 0.25);
+  stroke-width: 1;
+}
+
+.adam-knight .adam-plume {
+  fill: hsl(var(--primary-foreground) / 0.85);
 }
 
 .adam-knight .adam-visor {
-  fill: hsl(var(--adam-visor));
+  fill: #161412d9;
 }
 
 .adam-knight .adam-eye {
-  fill: hsl(var(--adam-eye));
+  fill: hsl(var(--primary-foreground));
+  animation: adam-eye-glow 2.8s ease-in-out infinite;
+}
+
+@keyframes adam-eye-glow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
 }
 
 .adam-knight .adam-rivet {
-  fill: hsl(var(--adam-rivet));
+  fill: hsl(var(--primary-foreground) / 0.5);
 }
 
 .adam-knight .adam-armor {
-  fill: hsl(var(--adam-armor));
+  fill: hsl(var(--primary) / 0.75);
+  stroke: hsl(var(--primary-foreground) / 0.2);
+  stroke-width: 1;
 }
 
 .adam-knight .adam-book {
-  stroke: hsl(var(--adam-book));
+  stroke: hsl(var(--primary-foreground) / 0.9);
   stroke-width: 2;
   stroke-linecap: round;
-  fill: none;
 }
 
-/* Каретка печатной машинки в реплике героя (HeroSpeech). */
+.dark .adam-knight .adam-helmet {
+  fill: #e7bb40f2;
+}
+
+.dark .adam-knight .adam-armor {
+  fill: #b8932ed9;
+}
+
+.dark .adam-launcher {
+  box-shadow: 0 0 24px #e7bb4059;
+}
+
+/* Каретка печатной машинки в реплике героя — дословно из боевой сборки
+   (color + animation .9s step-end; без display/margin). */
 .adam-caret {
-  display: inline-block;
-  margin-left: 1px;
   color: hsl(var(--primary));
-  animation: adam-caret-blink 1s steps(2, start) infinite;
+  animation: adam-caret-blink 0.9s step-end infinite;
 }
 
 @keyframes adam-caret-blink {
@@ -234,23 +245,19 @@
   }
 }
 
-/* Плавающая кнопка вызова героев. */
-.adam-launcher {
-  animation: adam-enter 0.35s ease-out both;
-}
-
-.adam-launcher:hover {
-  border-color: hsl(var(--primary));
-}
-
+/* Плавающая кнопка вызова героев. У самой кнопки собственных CSS-анимаций нет,
+   hover-правила в CSS не заведены — подсветка рамки задаётся классом
+   hover:border-primary в AdamLauncher. Enter-анимация панели живёт не здесь, а в
+   утилите animate-adam-enter (@keyframes adam-enter + animation:adam-enter
+   .35s ease-out both из tailwind.config.ts) — в боевом бандле это правило есть,
+   см. dump/css-theme.css. Reduced-motion ниже глушит только каретку. */
 .adam-launcher:focus-visible {
   outline: 2px solid hsl(var(--ring));
   outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .adam-caret,
-  .adam-launcher {
+  .adam-caret {
     animation: none;
   }
 }
@@ -406,6 +413,31 @@
   fill: #917830d9;
 }
 
+/* Контур здания ЮУ ИУБиП: тёмные правила дословно из боевой сборки
+   (dump/css-theme.css:119-125). Светлых правил .building-outline .b-* в бандле
+   нет, а сама SVG-фигура в дамп не попала (в js-strings.txt:1548 сохранился
+   обрывок ~250 символов) — сейчас на странице реконструкция-статистика без
+   классов b-*, поэтому правила ниже «спят» до Трека Б (HAR). */
+.dark .building-outline .b-wall {
+  fill: #e7bb4012;
+  stroke: #e7bb4099;
+}
+
+.dark .building-outline .b-win {
+  fill: #e7bb402e;
+  stroke: #e7bb408c;
+}
+
+.dark .building-outline .b-lit {
+  fill: #e7bb40d9;
+  stroke: #e7bb40;
+  animation-delay: 0.8s;
+}
+
+.dark .building-outline .b-door {
+  fill: #e7bb4066;
+}
+
 /* --- 4. Читаемость интерфейса (блок платформы) ----------------------------- */
 /* == wuna:ui-affordance == */
 /* Если блок объявлен «тёмным» (bg-primary/bg-foreground/bg-black), текст внутри
@@ -446,7 +478,22 @@
 
 /* == /wuna:ui-affordance == */
 
-/* Полоса прокрутки в тон темы (в тёмной теме светлая полоса режет глаз). */
-.dark * {
-  scrollbar-color: hsl(var(--border)) transparent;
+/* Полоса прокрутки в тёмной теме — дословно из боевой сборки
+   (dump/css-theme.css:127-133). */
+.dark ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #0e0d0c;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #474033;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #a38329;
 }

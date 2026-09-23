@@ -1,6 +1,6 @@
 import type { CharacterId } from './characters'
 
-/* ВОССТАНОВЛЕНО по списку экспортов из AdamAssistant.tsx:
+/* ВОССТАНОВЛЕНО по списку экспортов из AdamAssistantPanel.tsx:
 
      playSfx, playVoice, speakHero, stopSpeaking, toggleSound, toggleVoice,
      isSoundEnabled, isVoiceEnabled, unlockSpeech

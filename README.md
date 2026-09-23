@@ -25,8 +25,10 @@
 | Кейн | Фармация и сестринское дело | чародей с колпаком и флаконом (`chr-hat`, `chr-flask`) |
 | Бани | Экономика и управление | эльф (`chr-ear`) |
 
-Панель героев открывается плавающей кнопкой «Спросить Адама»: вкладка
-«Объяснение» (пошаговый разбор с озвучкой) и «Тест» (вопросы с разбором и итогом).
+Панель героев открывается плавающей кнопкой «Спросить Адама»: модальное окно
+с вкладками «Объяснение» (пошаговый разбор с озвучкой) и «Тест» (вопросы с
+разбором и итогом). Со страницы издания панель открывается сразу с героем
+раздела — проп `initialCategory` у `AdamAssistant`.
 
 ## Страницы
 
@@ -91,7 +93,7 @@ src/
 ├── index.css           тема Tailwind v4 и токены
 ├── custom.css          чёрно-золотая .dark, утилиты анимаций, фигуры героев
 ├── fonts.css           переменные гарнитур (Geist + Literata)
-├── components/         Layout, Navigation, Footer, ErrorBoundary, AdamAssistant…
+├── components/         Layout, Navigation, Footer, ErrorBoundary, AdamAssistantPanel…
 │   └── ui/             shadcn-примитивы
 ├── hooks/              useAuth, useTheme, useData, usePageMeta, useSupabaseTable…
 ├── lib/                supabase, characters, catalog, libraryData, adamKnowledge, heroSounds
@@ -137,7 +139,7 @@ src/
 Помечено в коде комментарием `ВОССТАНОВЛЕНО`:
 
 - структура компонентов: `src/App.tsx`, `Layout`, `Navigation`, `Footer`,
-  `AdamAssistant`, `CharacterQuiz`, страницы в `src/pages`
+  `AdamAssistantPanel`, `CharacterQuiz`, страницы в `src/pages`
 - `src/lib/adamKnowledge.ts` — полный текст шагов по туризму, по остальным
   трём разделам шаги есть, часть формулировок требует сверки
 - `src/lib/libraryData.ts`, `src/lib/heroSounds.ts`, `src/lib/supabase.ts`

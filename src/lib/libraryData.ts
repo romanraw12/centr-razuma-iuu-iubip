@@ -1,6 +1,6 @@
 import type { CategoryId } from './characters'
 
-/* ЧЕРНОВИК: контракт SAMPLE_BOOKS взят из AdamAssistant.tsx.
+/* ЧЕРНОВИК: контракт SAMPLE_BOOKS взят из AdamAssistantPanel.tsx.
    Обложки — эмодзи-иконки направлений на primary-фоне (design-system.json),
    поэтому поля с картинками нет. Данные заменить реальным каталогом. */
 
