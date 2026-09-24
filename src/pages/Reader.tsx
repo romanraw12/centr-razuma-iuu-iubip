@@ -6,7 +6,7 @@ import { Progress } from '@/components/ui/progress'
 import EmptyState from '@/components/EmptyState'
 import { getBookById } from '@/lib/libraryData'
 import { usePageMeta } from '@/hooks/usePageMeta'
-import { speakHero, stopSpeaking } from '@/lib/heroSounds'
+import { speakText, stopSpeaking } from '@/lib/heroSounds'
 
 /* ВОССТАНОВЛЕНО: страница не дошла в дампе; маршрут /read/:id, layout bare
    (см. routes.tsx). Настройки скорости речи и громкости — по интерфейсу,
@@ -49,24 +49,16 @@ export default function Reader() {
       return
     }
 
-    const text = paragraphs.join(' ').slice(0, 600)
+    const text = paragraphs.join(' ')
 
-    // Скорость и громкость применяются к реплике через Web Speech API.
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      const utterance = new SpeechSynthesisUtterance(text)
-      const voice = window.speechSynthesis.getVoices().find((item) => item.lang?.startsWith('ru'))
-      if (voice) utterance.voice = voice
-      utterance.lang = voice?.lang ?? 'ru-RU'
-      utterance.rate = rate
-      utterance.volume = volume
-      utterance.onend = () => setPlaying(false)
-      window.speechSynthesis.cancel()
-      window.speechSynthesis.speak(utterance)
-      setPlaying(true)
-      return
-    }
-
-    speakHero(text, 'adam')
+    // Настройки страницы (темп, громкость) передаём в общий движок озвучки:
+    // он сам делит текст на фразы, держит паузы и подбирает голос.
+    speakText(text, {
+      character: 'adam',
+      rateScale: rate,
+      volume,
+      onEnd: () => setPlaying(false),
+    })
     setPlaying(true)
   }
 

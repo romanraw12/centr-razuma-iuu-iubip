@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CheckCircle2, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 import { getCharacterByCategory, type CharacterId } from '@/lib/characters'
-import { playSfx } from '@/lib/heroSounds'
+import { playSfx, speakHero, stopSpeaking } from '@/lib/heroSounds'
 import { QUIZ_BANKS } from '@/lib/quizBanks'
 import CharacterAvatar from './CharacterAvatar'
 
@@ -157,6 +157,9 @@ export function CharacterQuiz({
     setPicked(option)
     const correct = option === current.correct
     playSfx(correct ? 'correct' : 'wrong')
+    // Герой поясняет ответ своим голосом: за верный — с похвалой,
+    // за неверный — мягко, чтобы не отбить желание продолжать.
+    speakHero(current.explanation, characterId, correct ? 'praise' : 'support')
     if (correct) setScore((value) => value + 1)
     else setWrong((value) => [...value, index])
   }
@@ -172,12 +175,27 @@ export function CharacterQuiz({
   }
 
   const restart = () => {
+    stopSpeaking()
     setIndex(0)
     setPicked(null)
     setScore(0)
     setWrong([])
     setFinished(false)
   }
+
+  // Итог герой произносит своим голосом: одобрительно или поддерживающе.
+  useEffect(() => {
+    if (!finished) return
+    const percent = Math.round((score / total) * 100)
+    const passed = percent >= 80
+    const verdict = passed
+      ? character?.greatDone || 'Отличный результат — раздел можно считать освоенным.'
+      : character?.midDoneText || 'Есть над чем поработать: вернись к объяснению и попробуй снова.'
+    speakHero(verdict, characterId, passed ? 'praise' : 'support')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finished])
+
+  useEffect(() => () => stopSpeaking(), [])
 
   if (finished) {
     const percent = Math.round((score / total) * 100)
