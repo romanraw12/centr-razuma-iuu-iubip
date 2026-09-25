@@ -222,7 +222,7 @@ const MOOD_TUNING: Record<HeroMood, { rate: number; pitch: number; gap: number }
 }
 
 const MAX_SPEECH_LENGTH = 1200
-const CHUNK_LENGTH = 180
+const CHUNK_LENGTH = 110
 
 const voiceCache = new Map<CharacterId, SpeechSynthesisVoice | null>()
 let voicesListenerAttached = false
@@ -259,6 +259,34 @@ function whenVoicesReady(callback: () => void) {
   }
 }
 
+/* Оценка «человечности» голоса. Нейронные голоса Microsoft (Online Natural),
+   Google и Яндекс звучат почти как дикторы; старые SAPI-голоса («Microsoft
+   Irina», «Microsoft Pavel») — машинно, поэтому получают низкий балл. */
+const ROBOTIC_HINTS = ['espeak', 'compact', 'desktop', 'sapi', 'speech platform']
+
+function scoreVoice(voice: SpeechSynthesisVoice, profile: VoiceProfile): number {
+  const name = voice.name.toLowerCase()
+  const lang = (voice.lang ?? '').toLowerCase()
+  let score = 0
+
+  if (lang.startsWith('ru')) score += 30
+  if (name.includes('natural') || name.includes('neural') || name.includes('нейро')) score += 120
+  if (name.includes('online')) score += 45
+  if (name.includes('premium') || name.includes('enhanced') || name.includes('plus')) score += 40
+  if (name.includes('google')) score += 55
+
+  // Совпадение с «характером» героя: мужские и женские имена из профиля.
+  profile.hints.forEach((hint, index) => {
+    if (name.includes(hint.toLowerCase())) score += 60 - index * 3
+  })
+
+  for (const bad of ROBOTIC_HINTS) {
+    if (name.includes(bad)) score -= 60
+  }
+
+  return score
+}
+
 function pickVoice(character?: CharacterId): SpeechSynthesisVoice | null {
   if (typeof window === 'undefined' || !window.speechSynthesis) return null
   if (character && voiceCache.has(character)) return voiceCache.get(character) ?? null
@@ -267,25 +295,39 @@ function pickVoice(character?: CharacterId): SpeechSynthesisVoice | null {
   if (!voices.length) return null
 
   const profile = character ? VOICE_PROFILES[character] : NEUTRAL_PROFILE
+  // Читаем только русскими голосами: иначе реплика пойдёт с чужим акцентом.
   const russian = voices.filter((voice) => (voice.lang ?? '').toLowerCase().startsWith('ru'))
+  const pool = russian.length ? russian : voices
 
   let chosen: SpeechSynthesisVoice | null = null
-  for (const hint of profile.hints) {
-    const needle = hint.toLowerCase()
-    chosen =
-      russian.find((voice) => voice.name.toLowerCase().includes(needle)) ??
-      voices.find((voice) => voice.name.toLowerCase().includes(needle)) ??
-      null
-    if (chosen) break
-  }
-
-  if (!chosen) {
-    // Безымянный случай: локальные голоса отзываются быстрее облачных.
-    chosen = russian.find((voice) => voice.localService) ?? russian[0] ?? voices[0] ?? null
+  let best = Number.NEGATIVE_INFINITY
+  for (const voice of pool) {
+    const score = scoreVoice(voice, profile)
+    if (score > best) {
+      best = score
+      chosen = voice
+    }
   }
 
   if (character) voiceCache.set(character, chosen)
   return chosen
+}
+
+/**
+ * Качество доступных голосов: 'natural' — есть нейронный «дикторский» голос,
+ * 'standard' — только системный синтез (звучит машинно), 'none' — синтеза нет.
+ */
+export function getVoiceQuality(): 'natural' | 'standard' | 'none' {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return 'none'
+  const voices = window.speechSynthesis.getVoices()
+  if (!voices.length) return 'none'
+
+  let best = Number.NEGATIVE_INFINITY
+  for (const voice of voices) {
+    best = Math.max(best, scoreVoice(voice, NEUTRAL_PROFILE))
+  }
+
+  return best >= 80 ? 'natural' : 'standard'
 }
 
 /** Лёгкая «дыхательная» вариация: без неё синтез звучит механически. */
@@ -352,29 +394,64 @@ function splitSentences(text: string): string[] {
   return sentences.filter(Boolean)
 }
 
-/** Фразы собираются в короткие блоки, длинные предложения делятся по запятым. */
-function chunkForSpeech(text: string): string[] {
-  const chunks: string[] = []
+/** Фраза делится на «дыхательные» такты по запятым, тире и двоеточиям. */
+function splitClauses(sentence: string): string[] {
+  const clauses: string[] = []
+  let buffer = ''
+
+  for (let i = 0; i < sentence.length; i += 1) {
+    const char = sentence[i]
+    buffer += char
+
+    const isBreak = char === ',' || char === ';' || char === ':' || char === '—'
+    if (!isBreak) continue
+
+    const next = sentence[i + 1]
+    if (next && !/\s/.test(next)) continue
+
+    clauses.push(buffer.trim())
+    buffer = ''
+  }
+
+  if (buffer.trim()) clauses.push(buffer.trim())
+  return clauses.filter(Boolean)
+}
+
+interface SpeechChunk {
+  text: string
+  /** Пауза после такта, мс. */
+  pause: number
+}
+
+/**
+ * Речь собирается из коротких тактов: закончился такт на запятой — пауза
+ * короче, закончилось предложение — пауза длиннее. Именно так дышат дикторы,
+ * а синтез перестаёт «тараторить» одной непрерывной строкой.
+ */
+function buildChunks(text: string, baseGap: number): SpeechChunk[] {
+  const chunks: SpeechChunk[] = []
   let current = ''
 
+  const flush = (pause: number) => {
+    if (!current) return
+    chunks.push({ text: current, pause })
+    current = ''
+  }
+
   for (const sentence of splitSentences(text)) {
-    const parts = sentence.length > CHUNK_LENGTH ? sentence.split(/,\s*/) : [sentence]
-
-    for (const part of parts) {
-      const piece = part.trim()
-      if (!piece) continue
-
-      const candidate = current ? current + ' ' + piece : piece
+    for (const clause of splitClauses(sentence)) {
+      const candidate = current ? `${current} ${clause}` : clause
       if (candidate.length > CHUNK_LENGTH && current) {
-        chunks.push(current)
-        current = piece
+        flush(Math.round(baseGap * 0.6))
+        current = clause
       } else {
         current = candidate
       }
     }
+    flush(baseGap)
   }
 
-  if (current) chunks.push(current)
+  flush(baseGap)
   return chunks
 }
 
@@ -417,7 +494,7 @@ export function speakText(text: string, options: SpeakOptions = {}) {
   const synth = window.speechSynthesis
   const profile = character ? VOICE_PROFILES[character] : NEUTRAL_PROFILE
   const tuning = MOOD_TUNING[mood]
-  const chunks = chunkForSpeech(humanize(text.slice(0, MAX_SPEECH_LENGTH)))
+  const chunks = buildChunks(humanize(text.slice(0, MAX_SPEECH_LENGTH)), profile.gap + tuning.gap)
   if (!chunks.length) return
 
   resetSpeech()
@@ -430,7 +507,7 @@ export function speakText(text: string, options: SpeakOptions = {}) {
       return
     }
 
-    const utterance = new SpeechSynthesisUtterance(chunks[index])
+    const utterance = new SpeechSynthesisUtterance(chunks[index].text)
     const voice = pickVoice(character)
     if (voice) utterance.voice = voice
     utterance.lang = voice?.lang ?? 'ru-RU'
@@ -442,7 +519,7 @@ export function speakText(text: string, options: SpeakOptions = {}) {
 
     const proceed = () => {
       if (token !== speakToken) return
-      const gap = Math.max(60, profile.gap + tuning.gap)
+      const gap = Math.max(60, chunks[index].pause)
       pendingTimer = window.setTimeout(() => speakChunk(index + 1), gap)
     }
     utterance.onend = proceed

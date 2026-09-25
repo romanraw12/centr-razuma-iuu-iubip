@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/button';
 import {
+  getVoiceQuality,
   isSoundEnabled,
   isVoiceEnabled,
   playSfx,
@@ -109,6 +110,21 @@ export function AdamPanel({
   const [step, setStep] = useState(0);
   const [sound, setSound] = useState(isSoundEnabled());
   const [voice, setVoice] = useState(isVoiceEnabled());
+  const [voiceQuality, setVoiceQuality] = useState<'natural' | 'standard' | 'none'>('natural');
+
+  /* Качество голосов зависит от браузера и системы, а список голосов Chrome
+     отдаёт асинхронно — проверяем дважды и по событию voiceschanged. */
+  useEffect(() => {
+    const check = () => setVoiceQuality(getVoiceQuality());
+    check();
+    const timer = window.setTimeout(check, 900);
+    const synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
+    synth?.addEventListener?.('voiceschanged', check);
+    return () => {
+      window.clearTimeout(timer);
+      synth?.removeEventListener?.('voiceschanged', check);
+    };
+  }, []);
 
   /* Открытие со страницы издания сразу выбирает героя раздела — как в бандле. */
   useEffect(() => {
@@ -214,6 +230,15 @@ export function AdamPanel({
             ))}
           </div>
         )}
+
+        {voice && voiceQuality === 'standard' && (
+          <p className="mx-4 mt-3 rounded-lg border border-border bg-muted/50 px-3 py-2 text-[11px] leading-snug text-muted-foreground">
+            Голоса звучат машинно: в этом браузере нет нейронных голосов. Откройте сайт в{' '}
+            <span className="font-medium text-foreground">Microsoft Edge</span> — там русские голоса
+            «Online Natural» звучат по-человечески, как дикторские.
+          </p>
+        )}
+
         <div className="max-h-[65vh] overflow-y-auto px-4 py-4">
           {!character && (
             <div className="space-y-4">
