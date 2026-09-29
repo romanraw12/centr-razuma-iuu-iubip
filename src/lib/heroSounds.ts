@@ -737,6 +737,22 @@ function buildChunks(text: string, baseGap: number): SpeechChunk[] {
 
 let speakToken = 0
 let pendingTimer: number | null = null
+/* onEnd текущей реплики и сторожевой таймер. Событие onend у Web Speech API
+   приходит не всегда (Chrome на Android молчит, если вкладку сворачивают или
+   синтез не стартовал), а «кнопка дальше» в тесте ждёт именно его. */
+let activeOnEnd: (() => void) | null = null
+let safetyTimer: number | null = null
+
+/** Позвать onEnd ровно один раз и снять сторожевой таймер. */
+function finishSpeech() {
+  const done = activeOnEnd
+  activeOnEnd = null
+  if (safetyTimer !== null && typeof window !== 'undefined') {
+    window.clearTimeout(safetyTimer)
+  }
+  safetyTimer = null
+  done?.()
+}
 
 function resetSpeech() {
   speakToken += 1
@@ -744,6 +760,9 @@ function resetSpeech() {
     window.clearTimeout(pendingTimer)
   }
   pendingTimer = null
+  // Прерванная реплика тоже считается законченной: иначе кнопка
+  // «Следующий вопрос» осталась бы заблокированной навсегда.
+  finishSpeech()
   if (typeof window === 'undefined' || !window.speechSynthesis) return
   try {
     window.speechSynthesis.cancel()
@@ -762,7 +781,12 @@ export interface SpeakOptions {
    */
   rateScale?: number
   volume?: number
-  /** Вызывается, когда прозвучала последняя фраза. */
+  /**
+   * Вызывается, когда прозвучала последняя фраза. Гарантированный контракт:
+   * зовётся ровно один раз — и по onend, и при отмене речи, и когда голос
+   * выключен либо синтез недоступен. На этом держится блокировка кнопки
+   * «Следующий вопрос» в тесте.
+   */
   onEnd?: () => void
 }
 
@@ -771,8 +795,16 @@ export interface SpeakOptions {
  * и поправкой на настроение (похвала, поддержка, предупреждение).
  */
 export function speakText(text: string, options: SpeakOptions = {}) {
-  if (!isVoiceEnabled()) return
-  if (typeof window === 'undefined' || !window.speechSynthesis || !text) return
+  // Контракт: onEnd зовётся всегда — и когда голос выключен, и когда синтез
+  // недоступен, иначе вызывающий код (кнопка «Следующий вопрос») зависнет.
+  if (!isVoiceEnabled()) {
+    options.onEnd?.()
+    return
+  }
+  if (typeof window === 'undefined' || !window.speechSynthesis || !text) {
+    options.onEnd?.()
+    return
+  }
 
   const { character, mood = 'neutral', volume, onEnd } = options
   const rateScale = options.rateScale ?? getVoiceRate()
@@ -782,15 +814,26 @@ export function speakText(text: string, options: SpeakOptions = {}) {
   const profile = profileFor(character)
   const tuning = MOOD_TUNING[mood]
   const chunks = buildChunks(humanize(text.slice(0, MAX_SPEECH_LENGTH)), profile.gap + tuning.gap)
-  if (!chunks.length) return
+  if (!chunks.length) {
+    onEnd?.()
+    return
+  }
 
   resetSpeech()
   const token = speakToken
+  activeOnEnd = onEnd ? () => onEnd() : null
+
+  // Сторож: если движок так и не позовёт onend (свернутая вкладка, отказ
+  // синтеза), реплика всё равно закончится и кнопка «Следующий вопрос»
+  // разблокируется. Оценка сверху: ~6 знаков в секунду + паузы + запас.
+  const chars = chunks.reduce((sum, chunk) => sum + chunk.text.length, 0)
+  const pauses = chunks.reduce((sum, chunk) => sum + chunk.pause, 0)
+  safetyTimer = window.setTimeout(finishSpeech, Math.min(180000, 4000 + chars * 160 + pauses))
 
   const speakChunk = (index: number) => {
     if (token !== speakToken) return
     if (index >= chunks.length) {
-      onEnd?.()
+      finishSpeech()
       return
     }
 
@@ -828,8 +871,13 @@ export function speakText(text: string, options: SpeakOptions = {}) {
 }
 
 /** Озвучить реплику героя с учётом его характера и настроения. */
-export function speakHero(text: string, character?: CharacterId, mood: HeroMood = 'neutral') {
-  speakText(text, { character, mood })
+export function speakHero(
+  text: string,
+  character?: CharacterId,
+  mood: HeroMood = 'neutral',
+  onEnd?: () => void,
+) {
+  speakText(text, { character, mood, onEnd })
 }
 
 export function stopSpeaking() {

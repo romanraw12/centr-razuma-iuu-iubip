@@ -145,12 +145,17 @@ export function CharacterQuiz({
   const [score, setScore] = useState(0)
   const [wrong, setWrong] = useState<number[]>([])
   const [finished, setFinished] = useState(false)
+  /** Герой ещё проговаривает разбор ответа — «Следующий вопрос» ждём. */
+  const [explaining, setExplaining] = useState(false)
 
   const character = getCharacterByCategory(categoryId)
   const characterId = (character?.id ?? 'adam') as CharacterId
   const current = questions[index]
   const isLast = index === questions.length - 1
   const total = questions.length
+
+  let nextLabel = isLast ? 'Показать итог' : 'Следующий вопрос'
+  if (explaining) nextLabel = 'Герой договаривает…'
 
   const choose = (option: number) => {
     if (picked !== null) return
@@ -159,12 +164,19 @@ export function CharacterQuiz({
     playSfx(correct ? 'correct' : 'wrong')
     // Герой поясняет ответ своим голосом: за верный — с похвалой,
     // за неверный — мягко, чтобы не отбить желание продолжать.
-    speakHero(current.explanation, characterId, correct ? 'praise' : 'support')
+    // Пока он договаривает, кнопка «Следующий вопрос» заблокирована.
+    setExplaining(true)
+    speakHero(current.explanation, characterId, correct ? 'praise' : 'support', () =>
+      setExplaining(false)
+    )
     if (correct) setScore((value) => value + 1)
     else setWrong((value) => [...value, index])
   }
 
   const next = () => {
+    // Следующий вопрос — только когда герой договорил разбор ответа.
+    if (explaining) return
+    setExplaining(false)
     if (isLast) {
       setFinished(true)
       onFinish?.(score, total)
@@ -176,6 +188,7 @@ export function CharacterQuiz({
 
   const restart = () => {
     stopSpeaking()
+    setExplaining(false)
     setIndex(0)
     setPicked(null)
     setScore(0)
@@ -284,8 +297,8 @@ export function CharacterQuiz({
       )}
 
       {picked !== null && (
-        <Button size="sm" onClick={next}>
-          {isLast ? 'Показать итог' : 'Следующий вопрос'}
+        <Button size="sm" onClick={next} disabled={explaining} aria-busy={explaining}>
+          {nextLabel}
         </Button>
       )}
     </div>

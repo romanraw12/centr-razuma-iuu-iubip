@@ -165,12 +165,18 @@ export function AdamPanel({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center overscroll-none p-0 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-label="Герои-ассистенты Центра разума"
     >
-      <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      {/* touch-none: палец по затемнённой подложке не должен листать каталог,
+          который лежит под модальным окном. */}
+      <div
+        className="absolute inset-0 touch-none bg-foreground/40 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
       <div className="relative w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl border border-border bg-card shadow-2xl animate-adam-enter overflow-hidden">
         <div className="flex items-center gap-3 border-b border-border px-4 py-3 bg-background">
@@ -308,7 +314,7 @@ export function AdamPanel({
           </div>
         )}
 
-        <div className="max-h-[65vh] overflow-y-auto px-4 py-4">
+        <div className="max-h-[65vh] overflow-y-auto overscroll-contain px-4 py-4">
           {!character && (
             <div className="space-y-4">
               <div className="flex gap-3">
@@ -508,9 +514,69 @@ export function AdamPanel({
   );
 }
 
+/**
+ * Пока открыта панель героя, страница под ней стоит на месте.
+ *
+ * Прокрутка фиксируется на теле (position: fixed + top: -scrollY): на iOS
+ * `overflow: hidden` не помогает, и без блокировки палец по затемнённой
+ * подложке листает каталог, лежащий под модальным окном. Позиция
+ * восстанавливается при закрытии, поэтому после панели страница возвращается
+ * ровно туда же, где была. Атрибут data-overlay читает ScrollToTop: он не
+ * дёргает прокрутку, пока оверлей на экране.
+ */
+function useOverlayScrollLock(locked: boolean) {
+  useEffect(() => {
+    if (!locked) return;
+    const { body } = document;
+    const scrollY = window.scrollY;
+    const scrollX = window.scrollX;
+    // Полоса прокрутки исчезает при position: fixed — компенсируем отступом,
+    // иначе страница дёрнется вбок.
+    const gap = window.innerWidth - document.documentElement.clientWidth;
+    const previous = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      paddingRight: body.style.paddingRight,
+      overflow: body.style.overflow,
+      overscroll: body.style.getPropertyValue('overscroll-behavior'),
+    };
+
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = `-${scrollX}px`;
+    body.style.right = '0';
+    body.style.width = '100%';
+    if (gap > 0) body.style.paddingRight = `${gap}px`;
+    body.style.overflow = 'hidden';
+    body.style.setProperty('overscroll-behavior', 'none');
+    document.documentElement.dataset.overlay = 'open';
+
+    return () => {
+      body.style.position = previous.position;
+      body.style.top = previous.top;
+      body.style.left = previous.left;
+      body.style.right = previous.right;
+      body.style.width = previous.width;
+      body.style.paddingRight = previous.paddingRight;
+      body.style.overflow = previous.overflow;
+      if (previous.overscroll) body.style.setProperty('overscroll-behavior', previous.overscroll);
+      else body.style.removeProperty('overscroll-behavior');
+      delete document.documentElement.dataset.overlay;
+      // Возвращаем страницу на исходное место без анимации (html smooth).
+      window.scrollTo({ top: scrollY, left: scrollX, behavior: 'instant' as ScrollBehavior });
+    };
+  }, [locked]);
+}
+
 /** Плавающая кнопка + панель: ставится один раз в App. */
 export function AdamAssistant({ initialCategory }: { initialCategory?: string }) {
   const [open, setOpen] = useState(false);
+
+  // Пока панель открыта, страница под ней зафиксирована (useOverlayScrollLock).
+  useOverlayScrollLock(open);
 
   useEffect(() => {
     if (!open) return;

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useLocation, useNavigationType } from 'react-router-dom'
 
 /* ВОССТАНОВЛЕНО: начало файла было обрезано при копировании.
@@ -8,16 +8,25 @@ import { useLocation, useNavigationType } from 'react-router-dom'
  * Прокрутка при навигации.
  *
  * Якорь (#id) — прокручиваем к элементу с учётом html { scroll-padding-top }.
- * Переход по ссылке (PUSH/REPLACE) без якоря — вверх страницы.
+ * Переход по ссылке (PUSH/REPLACE) без якоря — вверх страницы, но только если
+ * сменился путь: правка одной строки запроса (поиск и фильтры каталога делают
+ * это через replace) позицию не сбрасывает.
  * Возврат назад (POP) не трогаем: браузер сам восстанавливает позицию.
+ * Пока на экране панель героя (html[data-overlay='open']), прокрутку не трогаем
+ * вовсе: страница под модальным окном зафиксирована.
  */
 export function ScrollToTop() {
   const { pathname, hash } = useLocation()
   // navigationType не входит в Location в react-router v6 — берём отдельным хуком
   const navigationType = useNavigationType()
+  const lastPathname = useRef(pathname)
+
+  /** Панель героя открыта: страницу под ней не трогаем. */
+  const overlayOpen = () => document.documentElement.dataset.overlay === 'open'
 
   useEffect(() => {
     if (!hash) return
+    if (overlayOpen()) return
 
     const id = decodeURIComponent(hash.slice(1))
     const prefersReduced =
@@ -33,7 +42,13 @@ export function ScrollToTop() {
 
     // Пользователь начал листать сам — больше не вмешиваемся.
     const abort = () => { aborted = true }
-    const abortEvents: Array<keyof WindowEventMap> = ['wheel', 'touchstart', 'mousedown', 'keydown']
+    const abortEvents: Array<keyof WindowEventMap> = [
+      'wheel',
+      'touchstart',
+      'touchmove',
+      'mousedown',
+      'keydown',
+    ]
     abortEvents.forEach((ev) => window.addEventListener(ev, abort, { passive: true }))
 
     const targetOffset = () => {
@@ -42,6 +57,7 @@ export function ScrollToTop() {
     }
 
     const doScroll = (el: Element) => {
+      if (overlayOpen()) return
       scrollCalls += 1
       el.scrollIntoView({
         behavior: prefersReduced ? 'auto' : 'smooth',
@@ -52,7 +68,7 @@ export function ScrollToTop() {
     // После первого вызова следим ~4 секунды: если прокрутка замерла не у
     // цели (её отменил чужой вызов), повторяем scrollIntoView (не более 3 раз).
     const watch = (el: Element) => {
-      if (aborted) return
+      if (aborted || overlayOpen()) return
       watchFrames += 1
       if (watchFrames > 240) return
       const top = el.getBoundingClientRect().top
@@ -72,7 +88,7 @@ export function ScrollToTop() {
     }
 
     const tryScroll = () => {
-      if (aborted) return
+      if (aborted || overlayOpen()) return
       const el = document.getElementById(id)
       if (el) {
         doScroll(el)
@@ -93,8 +109,15 @@ export function ScrollToTop() {
   }, [pathname, hash])
 
   useEffect(() => {
+    const previousPathname = lastPathname.current
+    lastPathname.current = pathname
+
     if (hash) return
     if (navigationType === 'POP') return
+    // Поменялась только строка запроса: так работают поиск и фильтры каталога
+    // (Home меняет ?q и ?category через replace). Раньше такая замена уводила
+    // страницу наверх, и вернуть её на место было уже нечем.
+    if (previousPathname === pathname) return
 
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior })
   }, [pathname, hash, navigationType])
