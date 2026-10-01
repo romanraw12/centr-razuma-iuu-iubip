@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/button';
 import {
+  RATE_MAX,
+  RATE_MIN,
   getVoicePref,
   getVoiceRate,
   isSoundEnabled,
@@ -294,8 +296,8 @@ export function AdamPanel({
 
               <input
                 type="range"
-                min={0.6}
-                max={1.5}
+                min={RATE_MIN}
+                max={RATE_MAX}
                 step={0.05}
                 value={voiceRate}
                 onChange={(event) => {
@@ -304,6 +306,7 @@ export function AdamPanel({
                   setVoiceRateState(next);
                 }}
                 aria-label="Скорость речи героев"
+                aria-valuetext={`${voiceRate.toFixed(2)} от природного темпа героя`}
                 className="min-w-0 flex-1 accent-primary"
               />
 

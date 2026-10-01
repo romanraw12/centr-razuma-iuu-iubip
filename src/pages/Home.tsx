@@ -50,6 +50,20 @@ export default function Home() {
     setParams(next, { replace: true })
   }
 
+  /* Кнопки направлений стоят в секции выше каталога: смена фильтра меняет
+     только адрес, поэтому прокрутку к разделу «Каталог литературы» делаем
+     сами — иначе кнопка выглядит как мёртвая. Отступ сверху (5rem) берётся
+     из html { scroll-padding-top }. */
+  const scrollToCatalog = () => {
+    const prefersReduced =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    document.getElementById('catalog')?.scrollIntoView({
+      behavior: prefersReduced ? 'auto' : 'smooth',
+      block: 'start',
+    })
+  }
+
   return (
     <div>
       <section className="bg-primary py-16 text-primary-foreground md:py-24">
@@ -114,7 +128,10 @@ export default function Home() {
                   <Button
                     variant="link"
                     size="sm"
-                    onClick={() => setParam('category', category.id)}
+                    onClick={() => {
+                      setParam('category', category.id)
+                      scrollToCatalog()
+                    }}
                   >
                     Смотреть книги
                     <ArrowRight className="ml-1 h-4 w-4" />

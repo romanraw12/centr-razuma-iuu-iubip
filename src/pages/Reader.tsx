@@ -6,7 +6,7 @@ import { Progress } from '@/components/ui/progress'
 import EmptyState from '@/components/EmptyState'
 import { getBookById } from '@/lib/libraryData'
 import { usePageMeta } from '@/hooks/usePageMeta'
-import { speakText, stopSpeaking } from '@/lib/heroSounds'
+import { RATE_MAX, RATE_MIN, speakText, stopSpeaking } from '@/lib/heroSounds'
 
 /* ВОССТАНОВЛЕНО: страница не дошла в дампе; маршрут /read/:id, layout bare
    (см. routes.tsx). Настройки скорости речи и громкости — по интерфейсу,
@@ -99,13 +99,14 @@ export default function Reader() {
             </div>
 
             <label className="hidden items-center gap-2 text-xs text-muted-foreground sm:flex">
-              Скорость речи
+              Скорость речи: {rate.toFixed(2).replace('.', ',')}×
               <input
                 type="range"
-                min={0.6}
-                max={1.6}
+                min={RATE_MIN}
+                max={RATE_MAX}
                 step={0.1}
                 value={rate}
+                aria-valuetext={`${rate.toFixed(2)} от природного темпа`}
                 onChange={(event) => setRate(Number(event.target.value))}
                 className="w-24"
               />

@@ -317,12 +317,16 @@ export function setVoicePref(character: CharacterId | 'all', voiceName: string) 
 }
 
 /* Регулятор скорости речи героев (localStorage `cr-voice-rate`).
-   1 — штатный темп героя; 0.6 — очень медленно и вдумчиво; 1.5 — быстро.
+   1 — штатный темп героя; 0,5 — вдвое медленнее; 2 — вдвое быстрее.
    Умножается поверх профиля героя, поэтому ползунок одинаково управляет
    и Адамом с Кейном, и Николь с Банни. */
 const RATE_KEY = 'cr-voice-rate'
-const RATE_MIN = 0.6
-const RATE_MAX = 1.5
+/* Диапазон ползунка — один источник правды для панели героя и страницы чтения.
+   1 — природный темп героя (профиль 0,86/0,89), 0,5 — вдвое медленнее,
+   2 — вдвое быстрее. Раньше было 0,6–1,5, и нижняя часть упиралась в
+   кламп 0,6 внутри speakText: ползунок там просто не менял темп. */
+export const RATE_MIN = 0.5
+export const RATE_MAX = 2
 const RATE_DEFAULT = 1
 
 export function getVoiceRate(): number {
@@ -843,7 +847,10 @@ export function speakText(text: string, options: SpeakOptions = {}) {
     utterance.lang = voice?.lang ?? 'ru-RU'
 
     const drift = variation(index)
-    utterance.rate = clamp(profile.rate * rateScale + tuning.rate + drift.rate, 0.6, 2)
+    // Темп не зажимаем: Web Speech берёт 0,1–10, а наш диапазон ползунка с
+    // профилем героя даёт 0,43–1,78. Прежний кламп 0,6 «съедал» низ ползунка —
+    // там темп был одинаковым при любом положении.
+    utterance.rate = clamp(profile.rate * rateScale + tuning.rate + drift.rate, 0.1, 3)
     utterance.pitch = clamp(profile.pitch + tuning.pitch + drift.pitch, 0.5, 1.8)
     utterance.volume = clamp(volume ?? profile.volume, 0, 1)
 
