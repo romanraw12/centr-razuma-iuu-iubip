@@ -746,16 +746,49 @@ let pendingTimer: number | null = null
    синтез не стартовал), а «кнопка дальше» в тесте ждёт именно его. */
 let activeOnEnd: (() => void) | null = null
 let safetyTimer: number | null = null
+let holdTimer: number | null = null
+/* Когда синтез реально стартовал (utterance.onstart) и сколько реплика должна
+   длиться: по этой паре держим затвор, если onend пришёл слишком рано. */
+let speechStartedAt = 0
+let speechExpectedMs = 0
 
-/** Позвать onEnd ровно один раз и снять сторожевой таймер. */
-function finishSpeech() {
-  const done = activeOnEnd
-  activeOnEnd = null
+/** Позвать onEnd ровно один раз и снять сторожевой таймер.
+ *
+ *  hold — «дождаться» правдоподобной длительности реплики. Нужен потому, что
+ *  Chrome иногда зовёт onend раньше времени: без этого затвор в тесте
+ *  открывался, пока герой ещё договаривал разбор ответа. При отмене речи
+ *  (resetSpeech) hold не используется — там освобождать затвор надо сразу. */
+function finishSpeech(hold = false) {
   if (safetyTimer !== null && typeof window !== 'undefined') {
     window.clearTimeout(safetyTimer)
   }
   safetyTimer = null
-  done?.()
+
+  const done = activeOnEnd
+  const generation = speakToken
+  const deliver = () => {
+    // Реплику успели сменить (cancel, новая речь) — прошлый затвор не трогаем.
+    if (generation !== speakToken) return
+    if (holdTimer !== null && typeof window !== 'undefined') window.clearTimeout(holdTimer)
+    holdTimer = null
+    if (activeOnEnd === done) activeOnEnd = null
+    done?.()
+  }
+
+  if (hold && done && speechStartedAt > 0 && speechExpectedMs > 0) {
+    // Больше пяти секунд ждать нельзя: на очень быстром голосе оценка
+    // длительности может заметно перебирать, а затвор зависнуть не должен.
+    const left = Math.min(speechStartedAt + speechExpectedMs - Date.now(), 5000)
+    if (left > 200) {
+      if (holdTimer !== null) window.clearTimeout(holdTimer)
+      holdTimer = window.setTimeout(deliver, left)
+      return
+    }
+  }
+
+  if (holdTimer !== null && typeof window !== 'undefined') window.clearTimeout(holdTimer)
+  holdTimer = null
+  deliver()
 }
 
 function resetSpeech() {
@@ -832,12 +865,18 @@ export function speakText(text: string, options: SpeakOptions = {}) {
   // разблокируется. Оценка сверху: ~6 знаков в секунду + паузы + запас.
   const chars = chunks.reduce((sum, chunk) => sum + chunk.text.length, 0)
   const pauses = chunks.reduce((sum, chunk) => sum + chunk.pause, 0)
+  // Правдоподобная длительность реплики: ~11 знаков в секунду при rate 1,
+  // темп героя и настроение её масштабируют, плюс паузы между фразами. Если
+  // onend придёт раньше, затвор держится до этой отметки.
+  const effectiveRate = Math.max(0.2, profile.rate * rateScale)
+  speechExpectedMs = Math.round((chars / (11 * effectiveRate)) * 1000) + pauses
+  speechStartedAt = 0
   safetyTimer = window.setTimeout(finishSpeech, Math.min(180000, 4000 + chars * 160 + pauses))
 
   const speakChunk = (index: number) => {
     if (token !== speakToken) return
     if (index >= chunks.length) {
-      finishSpeech()
+      finishSpeech(true)
       return
     }
 
@@ -861,6 +900,11 @@ export function speakText(text: string, options: SpeakOptions = {}) {
     }
     utterance.onend = proceed
     utterance.onerror = proceed
+    // Момент, когда синтез действительно пошёл: от него считаем «недоигранное»
+    // время, если onend придёт раньше фактического конца фразы.
+    utterance.onstart = () => {
+      if (index === 0) speechStartedAt = Date.now()
+    }
 
     try {
       synth.speak(utterance)

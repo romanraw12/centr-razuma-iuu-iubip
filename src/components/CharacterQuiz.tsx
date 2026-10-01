@@ -176,6 +176,9 @@ export function CharacterQuiz({
   const next = () => {
     // Следующий вопрос — только когда герой договорил разбор ответа.
     if (explaining) return
+    // И глушим синтез: без этого хвост пояснения доигрывает поверх нового
+    // вопроса — вопрос в тесте не озвучивается, и смены речи не будет.
+    stopSpeaking()
     setExplaining(false)
     if (isLast) {
       setFinished(true)
